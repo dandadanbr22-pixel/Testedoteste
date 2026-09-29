@@ -1,0 +1,49 @@
+name: Windows Cloud PC - Anydesk (Otimizado)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Start Building...
+    runs-on: windows-latest
+    timeout-minutes: 360  # Limite máximo permitido pelo GitHub Actions (6 horas)
+
+    steps:
+      - name: Baixar e Instalar o AnyDesk Oficialmente
+        run: |
+          # Cria a pasta temporária de downloads
+          New-Item -ItemType Directory -Force -Path "C:\Downloads"
+          
+          # Baixa o executável oficial direto do servidor do AnyDesk
+          Write-Host "Baixando o AnyDesk..."
+          Invoke-WebRequest -Uri "https://download.anydesk.com/AnyDesk.exe" -OutFile "C:\Downloads\AnyDesk.exe"
+          
+          # Instala silenciosamente no diretório padrão do sistema
+          Write-Host "Instalando o AnyDesk silenciosamente..."
+          Start-Process -FilePath "C:\Downloads\AnyDesk.exe" -ArgumentList "--install `"C:\Program Files (x86)\AnyDesk`" --silent --start-with-win --create-shortcuts --create-desktop-icon" -Wait
+
+      - name: Configurar Senha e Iniciar AnyDesk
+        run: |
+          # Define a senha para acesso remoto não supervisionado utilizando o pipe correto exigido pelo AnyDesk
+          # Substitua 'SuaSenhaSegura123' pela senha que você deseja utilizar
+          Write-Host "Configurando senha de acesso remoto..."
+          echo SuaSenhaSegura123 | & "C:\Program Files (x86)\AnyDesk\AnyDesk.exe" --set-password
+          
+          # Garante que o serviço do AnyDesk seja iniciado de forma persistente
+          Write-Host "Iniciando o serviço AnyDesk..."
+          Start-Process "C:\Program Files (x86)\AnyDesk\AnyDesk.exe"
+
+      - name: Manter a Máquina Ativa e Monitorar
+        run: |
+          Write-Host "Máquina Virtual Pronta! Obtenha o ID do AnyDesk nos logs acima ou use o comando abaixo para validar."
+          
+          # Loop que monitora e mantém o ambiente ativo (segura a sessão por até 5h40min)
+          \$tempoMaximo = 340 
+          for (\$i = 0; i -lt tempoMaximo; \(i++) {\)process = Get-Process -Name "AnyDesk" -ErrorAction SilentlyContinue
+              if (-not \$process) {
+                  Write-Host "AnyDesk não estava rodando. Reiniciando o processo..."
+                  Start-Process "C:\Program Files (x86)\AnyDesk\AnyDesk.exe"
+              }
+              Start-Sleep -Seconds 60
+          }
